@@ -1,0 +1,7 @@
+In networking, "Day One" and "Day Two" support are terms used to describe different phases of the lifecycle of a network deployment or implementation.
+
+Day One Support: Day One support refers to the initial phase of a network deployment, which typically involves the planning, design, and implementation of the network. It encompasses activities such as network architecture design, equipment installation, configuration, and initial testing. During this phase, network engineers and administrators focus on setting up the network infrastructure and ensuring that it meets the requirements and objectives of the organization.
+
+Day Two Support: Day Two support refers to the ongoing operational and maintenance phase of a network deployment. Once the network is up and running, Day Two support comes into play. It involves tasks related to monitoring, troubleshooting, performance optimization, security management, and regular maintenance of the network. Network administrators and support teams are responsible for ensuring the stability, availability, and security of the network during this phase. They handle tasks such as monitoring network traffic, diagnosing and resolving issues, applying updates and patches, managing user access, and implementing security measures.
+
+In summary, Day One support focuses on the initial deployment and setup of the network, while Day Two support involves the ongoing operational and maintenance activities to ensure the network remains efficient, secure, and reliable over time.

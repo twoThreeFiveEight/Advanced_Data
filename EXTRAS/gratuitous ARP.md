@@ -1,0 +1,7 @@
+Gratuitous ARP (Address Resolution Protocol) is an ARP packet that is sent by a device without being explicitly requested. It is considered "gratuitous" because it serves no direct purpose of resolving an IP-to-MAC address mapping, unlike regular ARP requests and replies.
+
+A device typically sends a gratuitous ARP when it wants to update or announce its IP-to-MAC address mapping to other devices on the network. This can be useful in various scenarios, such as network reconfigurations, failover events, or resolving IP address conflicts.
+
+When a device sends a gratuitous ARP, it broadcasts an ARP packet containing its own IP and MAC address as both the source and destination. Other devices on the network that receive this packet update their ARP caches with the new information. By doing so, they ensure that they have the most up-to-date mapping between IP and MAC addresses for the sending device.
+
+The purpose of sending a gratuitous ARP is to proactively inform other devices about changes in network topology or to prevent potential issues that may arise due to outdated or conflicting address mappings. It helps to maintain proper communication and connectivity within the network by ensuring that all devices have accurate information about each other's IP-to-MAC address associations.
