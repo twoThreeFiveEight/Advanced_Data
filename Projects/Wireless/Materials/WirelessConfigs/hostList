@@ -1,0 +1,9 @@
+conf t
+ip host idf1 10.1.20.4
+ip host idf3 10.1.20.5
+ip host idf4 10.1.20.6
+ip host mdf2 10.0.0.3
+ip host mdf1 10.0.0.2
+end 
+wr mem
+quit

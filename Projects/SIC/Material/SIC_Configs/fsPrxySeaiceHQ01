@@ -1,0 +1,101 @@
+
+! Initial Configs 
+enable
+configure terminal
+  hostname fsPrxySeaIceHQ01
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+ip routing
+
+vlan 40
+name FinanceDataGateway
+
+vlan 50 
+name FinanceVoiceGateway
+
+interface port-channel3
+    description toMlsMDFSeaIceHQ01-portChannel
+    no switchport
+    ip address 10.1.180.5 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface port-channel4
+    description toMlsMDFSeaIceHQ02-portChannel
+    no switchport
+    ip address 10.1.180.1 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface loopback0
+    description fsPrxySeaIceHQ01/Management
+    ip address 10.0.0.1 255.255.255.255
+exit
+
+interface vlan 40
+    description dataGatewayToMDF
+    ip address 10.1.40.1 255.255.255.0
+    ip helper-address 10.1.10.6 
+    ip helper-address 10.1.10.7
+    shutdown
+    no shutdown
+exit
+
+interface vlan 50
+    description voiceGatewayToMDF
+    ip address 10.1.50.1 255.255.255.0
+    ip helper-address 10.1.10.6 
+    ip helper-address 10.1.10.7
+    shutdown
+    no shutdown
+exit
+
+interface range G0/0-1
+    description toMlsMDFSeaIceHQ01-Members
+    no switchport
+    no ip address
+    channel-group 3 mode active
+    shutdown
+    no shutdown
+exit
+
+interface range G0/2-3
+    description toMlsMDFSeaIceHQ02-portChannel
+    no switchport
+    no ip address 
+    channel-group 4 mode active
+    shutdown
+    no shutdown
+exit
+
+interface G1/1
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 40,50
+    shutdown
+    no shutdown
+exit
+
+router ospf 29
+    redistribute connected subnets
+    network 10.1.180.0 0.0.0.3 area 0
+    network 10.1.180.4 0.0.0.3 area 0
+    passive-interface default
+    no passive-interface vlan 40
+    no passive-interface vlan 50
+    no passive-interface po3
+    no passive-interface po4
+    no passive-interface G0/0
+    no passive-interface G0/1
+    no passive-interface G0/2
+    no passive-interface G0/3
+exit

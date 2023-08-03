@@ -1,0 +1,320 @@
+
+
+enable
+configure terminal
+  hostname mlsMDFSeaIceHQ01_10
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+ip routing 
+spanning-tree mode rapid-pvst
+
+vlan 10
+name Management/Servers
+
+vlan 20
+name CampusData
+spanning-tree vlan 20 priority 0
+
+vlan 30
+name CampusVoice
+spanning-tree vlan 30 priority 4096
+
+vlan 40
+name FinanceData
+
+vlan 50
+name FinanceVoice
+
+Vlan 60
+name WirelessAPs
+spanning-tree vlan 60 priority 4096
+
+vlan 180
+name Routing
+
+interface port-channel1
+    description towgsIDFSeaIceHQ01-PortChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    shutdown
+    no shutdown
+exit
+
+interface port-channel5
+    description towgsIDFSeaIceHQ03-PortChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    shutdown
+    no shutdown
+exit
+
+interface port-channel7
+    description towgsIDFSeaIceHQ04-PortChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    shutdown
+    no shutdown
+exit
+
+interface port-channel9
+    description toMlsMDFSeaIceHQ02-PortChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 10,20,30,40,50,60,180
+    shutdown
+    no shutdown
+exit
+
+interface fa2/0/46
+    description toWirelessController-PortChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 60
+    shutdown
+    no shutdown
+exit
+
+interface loopback0
+    description Management
+    ip address 10.0.0.2 255.255.255.255
+exit
+
+interface vlan 10
+    description NMS
+    ip address 10.1.10.2 255.255.255.240
+    standby version 2
+    standby 10 ip 10.1.10.1 
+    standby 10 priority 110
+    standby 10 preempt 
+    shutdown
+    no shutdown
+exit
+
+interface vlan 20
+    description CampusData
+    ip address 10.1.20.2 255.255.254.0
+    ip helper-address 10.1.10.6 
+    ip helper-address 10.1.10.7
+    ip helper-address 10.0.0.8
+    standby version 2
+    standby 20 ip 10.1.20.1
+    standby 20 priority 110
+    standby 20 preempt
+    shutdown
+    no shutdown
+exit
+
+interface vlan 30
+    description CampusVoice
+    ip address 10.1.30.2 255.255.254.0
+    ip helper-address 10.1.10.6 
+    ip helper-address 10.1.10.7
+    ip helper-address 10.0.0.8
+    standby version 2
+    standby 30 ip 10.1.30.1
+    standby 30 priority 110
+    standby 30 preempt
+    shutdown
+    no shutdown
+exit
+
+
+interface vlan 60
+    description WirelessAP
+    ip address 10.1.60.2 255.255.252.0
+    ip helper-address 10.1.10.6 
+    ip helper-address 10.1.10.7
+    ip helper-address 10.0.0.8
+    standby version 2
+    standby 60 ip 10.1.60.1
+    standby 60 priority 110
+    standby 60 preempt
+    shutdown
+    no shutdown
+exit
+
+interface vlan 180
+    description routing
+    ip address 10.1.180.9 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+    
+interface range fa2/0/7-8
+    description towgsIDFSeaIceHQ01-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    channel-group 1 mode active
+    shutdown
+    no shutdown
+exit
+
+interface fa2/0/5
+    description towgsIDFFirewallSeaIceHQ02-Members
+    no switchport
+    ip address 10.1.180.6 255.255.255.252 
+    shutdown
+    no shutdown
+exit
+
+interface range fa2/0/9-10
+    description towgsIDFSeaIceHQ03-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    channel-group 5 mode active
+    shutdown
+    no shutdown 
+exit
+
+interface range fa2/0/11-12
+    description towgsIDFSeaIceHQ04-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    channel-group 7 mode active
+    shutdown
+    no shutdown
+exit
+
+interface range fa2/0/1-4
+    description toMlsMDFSeaIceHQ02-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 10,20,30,40,50,60,180
+    channel-group 9 mode active
+    shutdown
+    no shutdown
+exit
+
+interface fa2/0/47
+    description toDhcpNMS01
+    switchport trunk encapsulation dot1q
+    switchport trunk allowed vlan 10,20,30,40,50,60
+    switchport mode trunk
+    shutdown 
+    no shutdown
+exit
+
+interface fa2/0/15
+    description toDhcpNMS01
+    switchport trunk encapsulation dot1q
+    switchport trunk allowed vlan 10,20,30,40,50,60
+    switchport mode trunk
+    shutdown 
+    no shutdown
+exit
+
+interface fa2/0/13
+    description toWLC
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 10,60
+    shutdown
+    no shutdown
+exit
+
+
+router ospf 29
+    redistribute static subnets
+    redistribute connected subnets
+    network 10.0.0.2 0.0.0.0 area 0
+    network 10.1.10.0 0.0.0.15 area 0
+    network 10.1.20.0 0.0.1.255 area 0
+    network 10.1.30.0 0.0.1.255 area 0
+    network 10.1.40.0 0.0.0.255 area 0
+    network 10.1.50.0 0.0.0.255 area 0
+    network 10.1.60.0 0.0.3.255 area 0
+    network 10.1.180.4 0.0.0.3 area 0
+    network 10.1.180.8 0.0.0.3 area 0
+    network 10.1.180.12 0.0.0.3 area 1
+    passive-interface default 
+    no passive-interface vlan 180
+    no passive-interface vlan 60
+    no passive-interface vlan 30
+    no passive-interface vlan 20
+    no passive-interface vlan 10
+    no passive-interface po9
+    no passive-interface fa2/0/1
+    no passive-interface fa2/0/2
+    no passive-interface fa2/0/3
+    no passive-interface fa2/0/4
+    no passive-interface fa2/0/5
+exit
+
+ip dhcp pool campusData10.1.20.0/23
+network 10.1.20.0 255.255.254.0 
+default-router 10.1.20.1
+address 10.1.20.1 client-id 11
+address 10.1.20.2 client-id 12
+address 10.1.20.3 client-id 13
+address 10.1.20.4 client-id 14
+address 10.1.20.5 client-id 15
+address 10.1.20.6 client-id 16
+
+ip dhcp pool campusVoice10.1.30.0/23
+network 10.1.30.0 255.255.254.0
+default-router 10.1.30.1
+address 10.1.30.1 client-id 11
+address 10.1.30.2 client-id 12
+address 10.1.30.3 client-id 13
+
+ip dhcp pool WireLessAP10.1.60.0/23
+network 10.1.60.0 	255.255.252.0
+default-router 10.1.60.1
+address 10.1.60.1 client-id 11
+address 10.1.60.2 client-id 12
+address 10.1.60.3 client-id 13
+address 10.1.60.4 client-id 14
+address 10.1.60.5 client-id 15
+address 10.1.60.6 client-id 16
+address 10.1.60.7 client-id 17
+address 10.1.60.8 client-id 18
+address 10.1.60.9 client-id 19
+address 10.1.60.10 client-id 20
+option 43 hex f1040a010a04
+
+   
+   
+! interface <Need interface here>
+!   description toVoiceGateway-PortChannel
+!    no switchport
+!    ip address 10.1.180.21 255.255.255.252
+!    spanning-tree portfast
+!    spanning-tree bpduguard enable 
+!    channel-group 10 mode active
+!    shutdown
+!    no shutdown
+!exit
+
+interface 
+    description toDNS1
+    switchport access vlan 10
+    switchport mode access
+    spanning-tree portfast
+    spanning-tree bpduguard enable
+    shutdown
+    no shutdown
+exit
+
+interface 
+    description toDHCP
+    switchport access vlan 10
+    switchport mode access
+    spanning-tree portfast
+    spanning-tree bpduguard enable
+    shutdown
+    no shutdown
+exit

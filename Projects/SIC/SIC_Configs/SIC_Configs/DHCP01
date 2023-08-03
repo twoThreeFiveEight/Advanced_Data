@@ -1,0 +1,73 @@
+
+enable
+configure terminal
+  hostname dhcp01
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+vlan 10
+name NMS
+
+ip routing 
+
+interface vlan 10
+    description dhcpServer01
+    ip address 10.1.10.6 255.255.255.240
+    shutdown
+    no shutdown
+exit
+
+interface G0/0
+    description toMDFSeaIceHQ01
+    switchport access vlan 10
+    switchport mode access
+    shutdown
+    no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 10.1.10.1 name Vlan10Gateway
+
+ip dhcp pool campusData10.1.20.0/23
+network 10.1.20.0 255.255.254.0 
+default-router 10.1.20.1
+address 10.1.20.1 client-id 11
+address 10.1.20.2 client-id 12
+address 10.1.20.3 client-id 13
+address 10.1.20.4 client-id 14
+address 10.1.20.5 client-id 15
+address 10.1.20.6 client-id 16
+
+ip dhcp pool campusVoice10.1.30.0/23
+network 10.1.30.0 255.255.254.0
+default-router 10.1.30.1
+address 10.1.30.1 client-id 11
+address 10.1.30.2 client-id 12
+address 10.1.30.3 client-id 13
+
+ip dhcp pool FinanceData10.1.40.0/24
+network 10.1.40.0 255.255.255.0 
+default-router 10.1.40.1
+address 10.1.40.1 client-id 11
+address 10.1.40.2 client-id 12
+
+ip dhcp pool FinanceVoice10.1.50.0/24
+network 10.1.50.0 255.255.255.0 
+default-router 10.1.50.1
+address 10.1.50.1 client-id 11 
+address 10.1.50.2 client-id 12 
+
+ip dhcp pool WireLessAP10.1.60.0/24
+network 10.1.60.0 	255.255.252.0
+default-router 10.1.60.1
+address 10.1.60.1 client-id 11
+address 10.1.60.2 client-id 12
+address 10.1.60.3 client-id 13
+
+end 
+write

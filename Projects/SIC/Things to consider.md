@@ -1,0 +1,5 @@
+- [switch stacking for redundancy]()
+- [PDU (Power Distribution Units)](obsidian://open?vault=NetworkNotes&file=AdvancedDataNotes%2FEXTRAS%2FPDU%20(Power%20Distribution%20Units))
+- [PSU-> Power Supply Unit]()
+- [UPS -> Uninterruptible Power Supply.]()
+- [PoE](obsidian://open?vault=NetworkNotes&file=AdvancedDataNotes%2FEXTRAS%2FPoE)

@@ -1,0 +1,75 @@
+enable
+configure terminal
+  hostname paNGFWSeaIceHQ02
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+ip routing
+
+interface loopback0
+    description rmtManagement
+    ip nat inside
+    ip address 10.0.0.7 255.255.255.255
+exit
+
+interface port-channel15
+    description toMDFSeaIceHQ02-Multilink
+    no switchport
+    ip nat inside
+    ip address 10.1.180.18 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface range G0/0-1
+    description toMDFSeaIceHQ02-Members
+    no switchport
+    no ip address
+    channel-group 15 mode active
+    shutdown
+    no shutdown
+exit
+
+interface G0/2
+    description toCenturtyInternet
+    no switchport
+    ip nat outside
+    ip address 152.162.97.182 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+access-list 1 permit 10.0.0.0 0.0.1.255
+ip nat inside source list 1 interface G0/2 overload
+
+router ospf 29
+    redistribute connected subnets
+    redistribute static subnets
+    redistribute bgp 6214
+    default-information originate
+    network 10.1.180.16 0.0.0.3 area 2
+    no passive-interface default
+    passive-interface G0/2
+exit
+
+
+ip prefix-list OUT_PREFIXES seq 10 permit 152.162.97.182/30
+route-map ISP_OUT permit 10
+match ip address prefix-list OUT_PREFIXES 
+
+ip prefix-list IN_PREFIXES seq 10 permit 0.0.0.0/0
+route-map ISP_IN permit 10
+match ip address prefix-list IN_PREFIXES
+
+router bgp 6214
+    neighbor 152.162.97.181 remote-as 65510
+    neighbor 152.162.97.181 soft-reconfiguration inbound
+    neighbor 152.162.97.181 route-map OUT_PREFIXES out
+    neighbor 152.162.97.181 route-map IN_PREFIXES in
+exit

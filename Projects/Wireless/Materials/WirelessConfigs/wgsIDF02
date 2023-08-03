@@ -1,0 +1,46 @@
+
+enable
+configure terminal
+  hostname wgsIDFSeaIceHQ02_14
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+no ip routing 
+
+vlan 40
+name FinanceData
+
+vlan 50 
+name FinanceVoice
+
+interface vlan 40
+    description rmtManagement
+    ip address 10.1.40.2 255.255.255.0
+    shutdown
+    no shutdown
+exit
+
+interface fa1/0/1
+    description toFsPrxySeaIceHQ01_12
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 40,50
+    shutdown
+    no shutdown
+exit
+
+interface range fa1/0/2-48
+    description toClient
+    switchport access vlan 40
+    switchport voice vlan 50
+    spanning-tree portfast
+    spanning-tree bpduguard enable 
+    shutdown
+    no shutdown
+exit

@@ -1,0 +1,80 @@
+
+enable
+configure terminal
+  hostname wgsIDFSeaIceHQ03
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+
+no ip routing 
+spanning-tree mode rapid-pvst
+
+vlan 20
+name CampusData
+
+vlan 30
+name CampusVoice
+
+Vlan 60
+name WirelessAPs
+
+interface port-channel5
+    description toMlsMDFSeaIceHQ01-portChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    shutdown 
+    no shutdown
+exit
+
+interface port-channel6
+    description toMlsMDFSeaIceHQ02-portChannel
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    shutdown 
+    no shutdown
+exit
+
+interface vlan 20
+    description rmtManagement
+    ip address 10.1.20.5 255.255.254.0
+    shutdown 
+    no shutdown
+exit
+
+interface range G0/0-1
+    description toMlsMDFSeaIceHQ01-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    channel-group 5 mode active
+    shutdown 
+    no shutdown
+exit
+
+interface range G0/2-3
+    description toMlsMDFSeaIceHQ02-Members
+    switchport trunk encapsulation dot1q
+    switchport mode trunk
+    switchport trunk allowed vlan 20,30,60
+    channel-group 6 mode active
+    shutdown 
+    no shutdown
+exit
+
+interface G1/0
+    description toClients
+    switchport access vlan 20
+    switchport mode access
+    spanning-tree portfast
+    spanning-tree bpduguard enable
+    shutdown
+    no shutdown
+exit

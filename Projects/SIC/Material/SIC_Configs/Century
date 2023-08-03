@@ -1,0 +1,47 @@
+enable
+configure terminal
+  hostname paNGFWSeaIceHQ01
+  enable secret cisco
+  username cisco secret cisco
+  line con 0
+  logging synchronous
+  login local
+  line vty 0 4
+    logging synchronous
+    login local
+
+interface loopback0
+    description mgmt
+    ip address 10.0.0.9 255.255.255.255
+exit
+
+interface G0/1
+    description toGoogle
+    ip address 152.162.97.186 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/0
+    description toSeaIce
+    ip address 152.162.97.181 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 152.162.97.185
+
+ip prefix-list OUT_PREFIXES seq 10 permit 0.0.0.0/0
+route-map ISP_OUT permit 10
+match ip address prefix-list OUT_PREFIXES 
+
+ip prefix-list IN_PREFIXES seq 10 permit 152.162.97.182/30
+route-map ISP_IN permit 10
+match ip address prefix-list IN_PREFIXES
+
+router bgp 65510
+    neighbor 152.162.97.182 remote-as 6214
+    neighbor 152.162.97.182 soft-reconfiguration inbound
+    neighbor 152.162.97.182 route-map OUT_PREFIXES out
+    neighbor 152.162.97.182 route-map IN_PREFIXES in
+exit
