@@ -1,0 +1,34 @@
+Aaron, nice work on the AWS lab.  For your next project, you are going to be working 
+with a Palo Alto firewall.
+
+For this project you are going to be utilizing the environment you built for the 
+Infoblox lab. In the LLD for that project there is a Firewall between the MLS 
+switches ad your Edge router, you will be placing the PA-VM device in that spot, 
+connect the three devices to the FW (make them L3 connections, use subnets of your 
+own design), and remove the two existing links between the edge router and the MLS 
+switches (aka the bypass links).  
+
+You will also need a PC with a browser to connect to the PA's management interface. 
+I recommend adding the Ubuntu Desktop Guest from the GNS3 marketplace.  Configure the 
+PC and the Palo's management (must be done from CLI) interface to point to each other.  
+Use that PC to access the GUI for the palo, where you will need to setup the Palo's 
+routing, and set 2 security policies to allow traffic through.
+
+inside -> outside allow any any
+outside -> inside allow any any
+
+Once you have verified that you have connectivity from your end users to the internet 
+check in with a mentor and we will discuss the security objectives that we want you 
+to design policies for.
+
+The target date for completion for the entire project will be 6/23
+These are the modifications you will need to make to the respective devices
+
+Palo VM v9.1.3
+Increase RAM and CPU assignment in the config menu of GNS3
+2 Cores minimum
+4gb of RAM minimum
+Ubuntu Desktop Client
+Add as appliance from GNS3 marketplace v20.04
+In configure menu Up cores to 2 and ram to 2gb
+Change QEMU Binary to x86_64 in general settings menu
