@@ -1,0 +1,38 @@
+enable
+conf t
+hostname century2
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 3
+logging synchronous 
+login local  
+
+interface loop0 
+    description LoopbackRTRComcast1
+    ip address 10.0.0.193 255.255.255.255
+exit
+
+interface G0/0
+    description toAstonTech
+    ip address 10.0.0.130 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/1
+    description toComcast2
+    ip address 10.0.0.133 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 10.0.0.134
+
+router ospf 29
+    network 10.0.0.128 0.0.0.3 area 0
+    redistribute connected subnets
+    default-information originate
+exit

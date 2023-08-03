@@ -1,0 +1,61 @@
+
+## TODO 
+-----
+
+[x] add g0/5 interface on rtrIL 
+[x] add L3 switch 01 
+    [x] g0/1-2 port channel conf to switch01
+    [x] add vlan 90
+    [x] add SVI for vlan 90 only after the declaration of vlan 90
+    [x] ip helper for all gateway vlans and HSRP VIPs 
+[x] add all conf to L3_sw_02
+[x] add "vip" to all clients for dhcp connection in all states
+    [x] new york
+    [x] california
+    [x] illinois
+[x] add "ip helper" to all the vlans
+    [x] new york
+    [x] california
+    [x] illinois
+[x] fix names for both switches for original ports
+    [x] switch 214
+    [x] switch 221
+[x] add new ports for each switch to the L3 switches 
+    [x] switch 214
+    [x] switch 221
+[x] FIGURE OUT WHAT HSRP VIP is and what I need to do with it.
+- This ended up being the standby version syntax stuff
+ 
+
+ ## INFO
+ ----
+
+ !*************************************************************************
+! Scene2 -> Illinois Network
+! 
+! rtrIL0XXa02a01
+!    toNY_ROUTER -> 10.2.XX.74/30 -> g0/2
+!    toCA_ROUTER -> 10.2.XX.70/30 -> g0/4
+!    toComCast -> 63.2.XX.18/24 -> g0/1 
+!    Loop0: 10.2.XX.192/32
+
+! Layer3 switch: mlsIL0XXa02a01 -> 10.2.XX.201/30 -> g0/3 -> routed link
+!    - Loop0: 10.2.XX.194/32
+!    - VLAN SVI 1XX0: 10.2.XX.209/29
+!    - VLAN SVI 2XX0: 10.2.XX.217/29
+!    - VLAN SVI 3XX0: 10.2.XX.225/27
+!        g1/0 -> Trunk 1XX0,2XX0
+!        g1/2 -> Access VLAN 3XX0
+!        g1/1 -> Trunk 1XX0,2XX0
+!    
+! Linux DHCP Server: V3XX0: 10.2.XX.228/27
+!
+! left network:
+! wgsIL0XXa02a01 -> VLAN 1XX0: 10.2.XX.214/29
+! JOEs desk: VLAN 1XX0: 10.2.XX.212/29
+!
+! Right network:
+! wgsIL0XXa02a02 -> VLAN 2XX0: 10.2.XX.213/29
+! Jareds desk -> V2XX0: 10.2.XX.220/29
+!
+!*************************************************************************

@@ -1,0 +1,147 @@
+
+! Scenario 1.2 Second network for scenario 1 IL
+
+! Virtual Personal computer (VPC) Configurations
+
+! Joe's Desk ip and vlan gateway
+ip 10.2.29.212/29 10.2.29.209
+wr 
+
+! Jared's Desk and vlan gateway
+ip 10.2.29.213/29 10.2.29.209
+wr 
+
+! Linux DHCP server
+! if config eth0 10.2.29.228 netmask 255.255.255.224 
+! sudo route add default gw 10.2.29.225 eth0 
+
+!non linux linux server
+ip 10.2.29.228/27 10.2.29.225
+wr 
+!
+! Switch Configuration
+! mlsIL029a02a01 
+! initial configuration
+!
+enable
+conf t
+hostname mlsIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+!
+!VLAN
+!
+vlan 1290
+name User 
+
+!
+! SVI Creation
+!
+interface vlan 1290
+description users joe and Jared
+ip address 10.2.29.209 255.255.255.248
+shut
+
+!
+! interface configurations
+!
+int g1/0
+description toJoe
+switchport access vlan 1290
+switchport mode access
+shut 
+no shut
+
+int g1/2
+description toJared
+switchport access vlan 1290
+switchport mode access
+shut 
+no shut
+
+!vlan 3290
+!name Server
+
+! SVI 
+interface vlan 3290
+description LinuxServer
+ip address 10.2.29.225 255.255.255.224
+shut 
+no shut
+
+int g1/1
+description toLinuxDhcpServer
+switchport access vlan 3290
+switchport mode access
+shut
+no shut
+
+int g0/3
+description toILRTR
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 1290,3290
+switchport mode trunk
+shut
+no shut
+
+end 
+wr mem
+
+!
+! Router Configuration 
+! rtrIL029a02a01
+! Init config
+!
+enable
+conf t
+hostname rtrIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! LoopBack configurations
+int loop0
+ip address 10.2.29.192 255.255.255.255
+no shut
+
+! sub-interface
+int g0/3
+no ip address
+no shut
+
+int g0/3.1290
+encapsulation dot1q 1290
+ip address 10.2.29.209 255.255.255.248
+shut 
+no shut
+
+int g0/3.3290
+encapsulation dot1q 3290
+ip address 10.2.29.225 255.255.255.224
+shut 
+no shut
+
+int g0/0
+ip address 10.2.29.70 255.255.255.252
+no shut
+
+!
+! Static Routing 
+!
+ip route 10.2.29.8 255.255.255.248 10.2.29.69
+ip route 10.2.29.1 255.255.255.255 10.2.29.69
+
+end 
+wr mem

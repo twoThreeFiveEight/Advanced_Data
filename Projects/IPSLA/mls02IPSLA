@@ -1,0 +1,28 @@
+
+enable
+conf t
+hostname mls01IPSLA
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local  
+
+ip routing 
+
+interface loop0
+    description mls02LoopBack
+    ip address 192.168.0.193 255.255.255.255 
+exit
+
+neighbor 63.1.29.6 remote-as 30
+    network 192.168.0.0 mask 255.255.255.0
+    neighbor 63.1.29.6 route-map CENTURY_IN in
+    neighbor 63.1.29.6 route-map NETWORK_SUMMARY_OUT out
+    neighbor 63.1.29.6 route-map UNDESIRABLE_ROUTE in
+    neighbor 63.1.29.6 soft-reconfiguration inbound
+    ! neighbor 63.1.29.6 route-map PREPEND out This causes routes to not be advertised
+exit

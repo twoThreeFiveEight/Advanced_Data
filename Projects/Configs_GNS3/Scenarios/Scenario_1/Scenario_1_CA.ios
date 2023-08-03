@@ -1,0 +1,143 @@
+! The excamation mark is a "comment"
+! ip = internet protocol found on lld spread sheet.
+! wr = write
+! syn = sychronous / 
+! line vty 0 4 means 5 people can be logged in at a time.
+! SVI = Switch virtual interface
+! int = interface
+! toCARTR = to CA router
+! bri = brief
+! conf t = configure terminal
+! switch port = port on the switch 
+! VPC = virtual personal computer
+! loop back = remote access (SSH)
+! no shut = no shutdown keep in upstate
+
+! Header
+! VPC Configurations
+
+! james' Office
+ip 10.2.29.10/29 10.2.29.9
+wr 
+! 
+
+! Adrian's Office 
+ip 10.2.29.11/29 10.2.29.9
+wr 
+!
+
+!Switch
+!wgsCA029a02a01 
+!initial configuration
+enable
+conf t
+hostname wgsCA029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+!
+!
+! The above is the standard header config.
+
+!
+!VLAN
+!
+vlan 1291
+name management
+
+! 
+!SVI Creation
+!
+interface vlan 1291
+description Rmt management
+ip address 10.2.29.14 255.255.255.248
+shut
+no shut
+!
+!interface configurations
+!
+int g0/2
+description toJames
+switchport access vlan 1291
+switchport mode access
+shut 
+no shut
+!
+int g0/3
+description toAdrian
+switchport access vlan 1291
+switchport mode access
+no shut
+!
+int g0/1
+description toCARTR
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 1291,2291
+switchport mode trunk
+no shut
+!
+end 
+wr mem
+
+!show int (interface) status
+!show int trunk
+!show int <portID> switchport
+!show ip int bri
+
+!
+! rtrCa029a02a01
+! initial configuration
+enable
+conf t
+hostname rtrCa029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+!
+! LoopBack configurations
+!
+int loop0
+ip address 10.2.29.1 255.255.255.255
+no shut
+!
+!sub-interface
+!
+int g0/3
+no ip address
+no shut
+!
+int g0/3.1291
+encapsulation dot1q 1291
+ip address 10.2.29.9 255.255.255.248
+shut 
+no shut
+!
+int g0/3.2291
+encapsulation dot1q 2291
+ip address 10.2.29.17 255.255.255.248
+shut 
+no shut
+!
+int g0/0
+ip address 10.2.29.69 255.255.255.252
+no shut
+!
+
+!
+! static route
+!
+ip route 10.2.29.208 255.255.255.248 10.2.29.70
+ip route 10.2.29.192 255.255.255.255 10.2.29.70
+ip route 10.2.29.224 255.255.255.224 10.2.29.70
+
+do wr mem

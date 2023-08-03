@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../Scenario_7"
+		}
+	],
+	"settings": {
+		"terminal.integrated.automationProfile.linux": {
+
+		},
+		"terminal.integrated.defaultProfile.linux": ""
+	}
+}

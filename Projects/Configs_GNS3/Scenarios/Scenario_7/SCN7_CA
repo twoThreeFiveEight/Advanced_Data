@@ -1,0 +1,155 @@
+
+! ------------------------------------------
+! Hosts
+! ------------------------------------------
+! James_CA_10.2.29.10/29 Vlan 1291 -> 10.2.29.9/29  gateway
+ip 10.2.29.10/29 10.2.29.9
+wr
+
+
+! Switch: wgsCA029a02a01
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsCA029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! Spanning-Tree global
+spanning-tree portfast default
+
+! BPDU Guard
+spanning-tree bpduguard default
+
+! VLANs
+! ------------------------
+vlan 1291
+name RemoteManagement 
+
+! not in use
+! vlan 2291
+! name 
+
+! SVI Creation
+! ------------------------
+interface vlan 1291
+description Users: James
+ip address 10.2.29.14 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g0/1
+description toCA_ROUTER
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1291,2291
+shut
+no shut
+
+int g0/2
+description toJames
+switchport access vlan 1291
+switchport mode access 
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end 
+wr mem
+
+! Router: rtrCA029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname rtrCA029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! LoopBack configurations
+! -------------------------
+int loop0
+ip address 10.2.29.1 255.255.255.255
+shut
+no shut
+
+! sub-interface
+! ------------------------
+int g0/3
+no ip address
+! DO I NEED TO ADD IP HELPER HERE -> NO 
+shut
+no shut
+
+int g0/3.1291
+encapsulation dot1q 1291
+ip address 10.2.29.9 255.255.255.248
+ip helper-address 10.2.29.228
+shut
+no shut
+
+int g0/3.2291
+encapsulation dot1q 2291
+ip address 10.2.29.17 255.255.255.248
+ip helper-address 10.2.29.228
+shut
+no shut
+
+int g0/2
+ip address 10.2.29.69 255.255.255.252
+shut
+no shut
+
+! Static Routing 
+! ------------------------
+! Default -> ospf rtrIL is using `redistribute static` so the default route is being advertised. 
+!--------
+! ip route 0.0.0.0 0.0.0.0 10.2.29.70
+
+! toIL 
+! supernet: 10.2.29.192/26
+!-------------------------
+! STATIC SUMMERIZATION: ip route 10.2.29.192 255.255.255.192 10.2.29.70
+
+
+! toNY
+!-----
+!toAdrian 10.2.29.128/27 supernet
+! STATIC SUMMERIZATION: ip route 10.2.29.128 255.255.255.224 10.2.29.70
+
+! OSPF
+!-----------------------------
+router ospf 10
+network 10.2.29.68 0.0.0.3 area 1
+passive-interface g0/3     
+redistribute connected subnets
+redistribute static subnets
+
+end 
+wr mem

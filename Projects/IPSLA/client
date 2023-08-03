@@ -1,0 +1,3 @@
+
+! to mls Default gateway
+ip 192.168.0.2/29 192.168.0.1

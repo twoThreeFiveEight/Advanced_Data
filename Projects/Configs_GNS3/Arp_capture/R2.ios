@@ -1,0 +1,18 @@
+hostname <name you want>
+enable secret <PASSWORD>
+username <USERNAME> secret <PASSWORD>
+line con 0
+logging synchronous
+login local
+line vty 0 4
+logging synchronous
+login local
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

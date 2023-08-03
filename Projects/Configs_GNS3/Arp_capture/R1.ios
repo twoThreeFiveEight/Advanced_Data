@@ -1,0 +1,28 @@
+
+hostname <name you want>
+enable secret <PASSWORD>
+username <USERNAME> secret <PASSWORD>
+line con 0
+logging synchronous
+login local
+line vty 0 4
+logging synchronous
+login local
+
+! FOR HSRP
+! -------------------------------------
+! Type command "cpStandby"
+!  SET: Preempt if ACTIVE switch only.
+!  SET: priority, Higher == More prefered
+!  VLAN_ID is a good convention for ID number
+
+vlan <DEFAULT GATEWAY VLAN_ID>
+name <DEFAULT GATEWAY NAME>
+
+interface vlan <DEFAULT GATEWAY VLAN_ID>
+   description <CAMPUS DATE | CAMPUSVOICE | NMS | FINANCE>
+   ip address <DEFAULT GATEWAY IP> <DEFAULT GATEWAY SUBNET MASK>
+   ip helper-address <DHCP POOL IP ADDRESS>
+   shutdown
+   no shutdown
+exit

@@ -1,0 +1,90 @@
+
+enable
+conf t
+hostname PHI-CORE-RTR1
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+interface loop0
+ip address 192.168.0.66 255.255.255.255
+shut 
+no shut
+
+interface fa0/0/1
+ip address 192.168.0.69 255.255.255.252
+shut 
+no shut
+
+interface fa0/0/0
+ip address 192.168.0.73 255.255.255.252
+shut
+no shut
+
+interface fa0/2/0
+ip address 192.168.0.130 255.255.255.252
+shut 
+no shut
+
+interface fa0/2/1
+ip address 192.168.0.134 255.255.255.252
+shut
+no shut
+
+router ospf 100
+network 192.168.0.128 0.0.0.3 area 0
+network 192.168.0.132 0.0.0.3 area 0
+redistribute bgp 832
+passive-interface fa0/0/0
+passive-interface fa0/0/1
+default-information orignated
+exit
+
+ip route 192.168.0.0 255.255.255.0 null0 name Summary_Null_Route
+
+ip prefix-list WAN_IN_PREFIXES seq 10 permit 0.0.0.0/0
+ip prefix-list WAN_IN_PREFIXES seq 10 permit 172.16.0.0/24
+ip prefix-list WAN_IN_PREFIXES seq 20 permit 10.0.0.0/16
+ip prefix-list WAN_IN_PREFIXES seq 30 permit 10.1.0.0/16
+route-map WAN_IN permit 10
+match ip address prefix-list WAN_IN_PREFIXES
+exit
+
+ip prefix-list WAN_OUT_PREFIX seq 10 permit 192.168.0.0/24
+route-map WAN_OUT permit 10
+match ip address prefix-list WAN_OUT_PREFIX
+exit
+
+ip prefix-list ISP_IN_PREFIX seq 10 permit 0.0.0.0/0
+route-map ISP_IN permit 10
+match ip address prefix-list ISP_IN_PREFIX
+exit
+
+ip prefix-list ISP_OUT_PREFIXES seq 10 permit 192.168.0.0/24
+ip prefix-list ISP_OUT_PREFIXES seq 10 permit 10.0.0.0/16
+ip prefix-list ISP_OUT_PREFIXES seq 20 permit 172.16.0.0/24
+ip prefix-list ISP_OUT_PREFIXES seq 30 permit 10.1.0.0/16
+route-map ISP_OUT permit 10
+match ip address prefix-list ISP_OUT_PREFIXES
+exit
+
+router bgp 832
+neighbor 196.168.0.70 remote-as 661
+neighbor 196.168.0.74 remote-as 831
+network 192.168.0.0 mask 255.255.255.0
+neighbor 196.168.0.70 soft-reconfiguration inbound
+neighbor 196.168.0.74 soft-reconfiguration inbound
+redistribute ospf 100
+neighbor 196.168.0.70 route-map WAN_IN in
+neighbor 196.168.0.70 route-map WAN_OUT out
+neighbor 196.168.0.74 route-map ISP_IN in
+neighbor 196.168.0.74 route-map ISP_OUT out
+exit
+
+end 
+wr mem

@@ -1,0 +1,172 @@
+!*************************************************************************
+! Scene2
+! NewYork Network
+! 
+! rtrNY0XXa02a01
+!    toIL_ROUTER -> 10.2.XX.73/30 -> G0/2
+!    to_SWITCH -> g0/3 Vlans
+!        (Users) 10.2.XX.137/29: G0/3.1XX2
+!        (Users) 10.2.XX.145/29: G0/3.2XX2
+!    Loop0: 10.2.XX.128/32
+!
+! wgsNY0XXa02a01 -> VLAN 1XX2: 10.2.XX.142/29
+!
+! Adrian Office -> V1XX2: 10.2.XX.138/29
+!
+! *************************************************************************
+
+! [ ] TODO -> add ip helper to our vlans
+
+! ------------------------------------------
+! Hosts
+! ------------------------------------------
+! Adrain_NY_10.2.29.138/29 Vlan 10.2.29.137 1292 gateway
+ip 10.2.29.138/29 10.2.29.137
+wr
+
+
+! Switch: wgsNY029a02a01
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsNY029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! Spanning-Tree global
+spanning-tree portfast default
+
+! BPDU Guard
+spanning-tree bpdu gaurd default
+
+
+! VLANs 
+! ------------------------
+vlan 1292
+name RemoteManagement 
+
+! not in use
+! vlan 2292
+! name 
+
+! SVI Creation
+! ------------------------
+interface vlan 1292
+description Users: James
+ip address 10.2.29.142 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g0/1
+description toNY_ROUTER
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1292,2292
+shut
+no shut
+
+int g0/2
+description toAdrians 
+switchport access vlan 1292
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end 
+wr mem
+
+! Router: rtrNY029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname rtrNY029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! LoopBack configurations
+! -------------------------
+int loop0
+ip address 10.2.29.128 255.255.255.255
+shut
+no shut
+
+int g0/2
+ip address 10.2.29.73 255.255.255.252
+shut
+no shut
+
+! sub-interface
+! ------------------------
+int g0/3
+no ip address
+shut
+no shut
+
+int g0/3.1292
+encapsulation dot1q 1292
+ip address 10.2.29.137 255.255.255.248
+ip helper-address 10.2.29.228
+shut
+no shut
+
+int g0/3.2292
+encapsulation dot1q 2292
+ip address 10.2.29.145 255.255.255.248
+ip helper-address 10.2.29.228
+shut
+no shut
+
+! Static Routing 
+! ------------------------
+! Default 
+!--------
+! ip route 0.0.0.0 0.0.0.0 10.2.29.74
+
+! toIL 
+! supernet: 10.2.29.192/26
+!-------------------------
+! STATIC SUMMERIZATION: ip route 10.2.29.192 255.255.255.192 10.2.29.74
+
+!toCA
+!-----
+! toJames
+! STATIC SUMMERIZATION: ip route 10.2.29.0 255.255.255.224 10.2.29.74
+
+! OSPF
+!-----------------------------
+router ospf 30
+network 10.2.29.72 0.0.0.3 area 2
+passive-interface g0/3     
+redistribute connected subnets
+redistribute static subnets
+
+end 
+wr mem

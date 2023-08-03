@@ -1,0 +1,56 @@
+
+enable
+conf t
+hostname DEN-ACC-SW1
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+no ip routing
+
+vlan 25
+name MGMT
+
+vlan 115
+name USERS
+
+interface vlan 25
+description MGMT
+ip address 10.0.0.5 255.255.255.240
+shut 
+no shut
+
+interface fa0/1
+description toDEN-RTR1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 25,115
+shut 
+no shut
+
+interface fa0/2
+description toMGMT
+switchport access vlan 25
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+interface fa0/3
+description toUSERS
+switchport access vlan 115
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end
+wr mem
+

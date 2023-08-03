@@ -1,0 +1,328 @@
+
+
+! L3_01 Switch: mlsIL029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname mlsIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Make Switch Layer 3
+ip routing
+
+! TODO -> ADD TO L3 SWITCH ***************************************************************************************************************
+vlan 90
+name PortChannel
+! end ************************************************************************************************************************************
+
+vlan 1290
+name Office1
+
+vlan 2290
+name Office2
+
+vlan 3290
+name Server
+
+! NEW ************************************************************************************************************************************* 
+! SVI -> L2 port channel -> remote management 
+interface vlan 90
+description RemoteMngmtPortChannel
+ip address 10.2.29.197 255.255.255.252
+shut 
+no shut
+
+! SVI -> defualt gateways
+! The standby number is arbitrary but by convention you should assign it the vlan_id that it correspnds with
+! -----------------------
+interface vlan 1290
+description Users: office1
+ip address 10.2.29.209 255.255.255.248
+standby version 2 
+standby 1290 ip 10.2.29.211
+standby 1290 priority 110 
+standby 1290 preempt
+ip helper-address 10.2.29.228
+shut
+no shut
+
+interface vlan 2290
+description Users: office2
+ip address 10.2.29.217 255.255.255.248
+standby version 2 
+standby 2290 ip 10.2.29.219
+standby 2290 priority 110 
+standby 2290 preempt
+ip helper-address 10.2.29.228
+shut
+no shut
+
+interface vlan 3290
+description Users: Server
+ip address 10.2.29.225 255.255.255.224
+standby version 2 
+standby 3290 ip 10.2.29.227
+standby 3290 priority 110 
+standby 3290 preempt
+ip helper-address 10.2.29.228
+shut
+no shut
+! end **************************************************************************************************************************************
+
+
+! LoopBack configurations
+! -------------------------
+interface loop0
+ip address 10.2.29.194 255.255.255.255
+shut
+no shut
+
+! Interfaces
+! -------------------------
+! TO_ROUTER
+interface g0/3
+no switchport
+ip address 10.2.29.201 255.255.255.252
+shut
+no shut
+
+! NEW ************************************************************************************************************************************* 
+! PORT CHANNEL
+! trunk switch to switch interfaces. NOTE THE RANGE USE
+interface range g0/1-2
+description toPortChannel_WLS_01_WLS02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 90,3290
+channel-group 1 mode active
+shut 
+no shut
+
+! PORT CHANNEL
+! trunk switch to switch interfaces. NOTE THE RANGE USE
+interface port-channel1 
+description portChannel1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 90,3290
+shut 
+no shut
+! end **************************************************************************************************************************************
+
+! g1/0 
+interface g1/0
+description toWGSIL_01
+switchport trunk encapsulation dot1q 
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+! g1/2
+int g1/2
+description toLinuxServer
+switchport access vlan 3290
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+! NEW ************************************************************************************************************************************* 
+! g1/1
+int g1/1
+description toWGSIL_02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+! end **************************************************************************************************************************************
+
+! OSPF
+!-----------------------------
+router ospf 40
+network 10.2.29.200 0.0.0.3 area 0
+! NEW ************************************************************************************************************************************* 
+network 10.2.29.196 0.0.0.3 area 0
+! end ***********************************************************************************************************************************
+passive-interface g1/0
+passive-interface g1/1
+passive-interface g1/2   
+redistribute connected subnets
+redistribute static subnets
+
+end 
+wr mem
+
+! NEW ************************************************************************************************************************************* 
+
+! L3_02 Switch: mlsIL029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname mlsIL029a02a02
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Make Switch Layer 3
+ip routing
+
+vlan 90
+name PortChannel
+
+vlan 1290
+name Office1
+
+vlan 2290
+name Office2
+
+vlan 3290
+name Server
+
+! SVI -> defualt gateways
+! -----------------------
+interface vlan 90
+description Port Channel
+ip address 10.2.29.198 255.255.255.252
+shut 
+no shut
+
+interface vlan 1290
+description Users: office1
+ip address 10.2.29.210 255.255.255.248
+standby version 2 
+standby 1290 ip 10.2.29.211
+standby 1290 priority 100
+ip helper-address 10.2.29.228
+shut
+no shut
+
+interface vlan 2290
+description Users: office2
+ip address 10.2.29.218 255.255.255.248
+standby version 2 
+standby 2290 ip 10.2.29.219
+standby 2290 priority 100 
+ip helper-address 10.2.29.228
+shut
+no shut
+
+interface vlan 3290
+description Users: Server
+ip address 10.2.29.226 255.255.255.224
+standby version 2 
+standby 3290 ip 10.2.29.227
+standby 3290 priority 100 
+ip helper-address 10.2.29.228
+shut
+no shut
+
+! LoopBack configurations
+! -------------------------
+interface loop0
+ip address 10.2.29.195 255.255.255.255
+shut
+no shut
+
+! PORT CHANNEL
+! trunk switch to switch interfaces. NOTE THE RANGE USE
+interface range g0/1-2
+description toPortChannel_WLS_01_WLS02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 90,3290
+channel-group 1 mode active
+shut 
+no shut
+
+! PORT CHANNEL
+! trunk switch to switch interfaces. NOTE THE RANGE USE
+interface port-channel1 
+description portChannel1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 90,3290
+shut 
+no shut
+
+! Interfaces
+! -------------------------
+! TO_ROUTER
+interface g0/3
+no switchport
+ip address 10.2.29.205 255.255.255.252
+shut
+no shut
+
+! g1/0 
+interface g1/1
+description toWGSIL_01
+switchport trunk encapsulation dot1q 
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+! g1/1
+int g1/0
+description toWGSIL_02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+! OSPF -> 10.2.29.204 network address
+!------------------------------------
+router ospf 50
+network 10.2.29.204 0.0.0.3 area 0
+network 10.2.29.196 0.0.0.3 area 0
+passive-interface g1/0
+passive-interface g1/1
+redistribute connected subnets
+redistribute static subnets
+
+end 
+wr mem
+
+! end **************************************************************************************************************************************
+
+
+
+! Static Routing 
+! ------------------------
+! default gateway
+!----------------
+! ip route 0.0.0.0 0.0.0.0 10.2.29.202
+
+! toIL_ROUTER
+!------------
+! STATIC SUMMERIZATION: ip route 10.2.29.192 255.255.255.255 10.2.29.202
+
+! toNY
+!-----
+!toAdrian 10.2.29.128/27 supernet
+! STATIC SUMMERIZATION: ip route 10.2.29.128 255.255.255.224 10.2.29.202
+
+!toCA
+!-----
+! toJames 10.2.29.0/27 supernet
+! STATIC SUMMERIZATION: ip route 10.2.29.0 255.255.255.224 10.2.29.202

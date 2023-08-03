@@ -1,0 +1,120 @@
+
+enable
+conf t
+hostname mls01IPSLA
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local  
+
+ip routing 
+
+vlan 10
+name OurOnlyClient
+
+interface loop0
+    description mlsLoopBack
+    ip address 192.168.0.192 255.255.255.255 
+exit
+
+interface vlan 10
+    description vlan10clientDefaultGateway
+    ip address 192.168.0.1 255.255.255.248
+    shutdown
+    no shutdown
+exit
+
+interface G0/0
+    description toComcast1
+    no switchport
+    ip address 63.1.29.1 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/1
+    description toCentury
+    no switchport
+    ip address 63.1.29.5 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/2
+    description toClient
+    switchport mode access 
+    switchport access vlan 10
+    shutdown
+    no shutdown
+exit
+
+ip route 192.168.0.0 255.255.255.0 null0 name netSummary
+
+ip prefix-list NETWORK_SUMMARY_OUTPrefix seq 10 permit 192.168.0.0/24
+ip prefix-list InPrefixCentury seq 10 permit 10.0.0.128/25
+ip prefix-list InPrefixComcast seq 10 permit 10.0.0.0/25
+ip prefix-list defaultInPrefix seq 10 permit 0.0.0.0/0
+
+route-map NETWORK_SUMMARY_OUT permit 10               
+    match ip address prefix-list NETWORK_SUMMARY_OUTPrefix
+exit
+
+route-map COMCAST_IN permit 10
+    match ip address prefix-list defaultInPrefix
+    match ip address prefix-list InPrefixComcast
+exit
+
+route-map CENTURY_IN permit 10 
+    match ip address prefix-list defaultInPrefix
+    match ip address prefix-list InPrefixCentury
+exit
+
+ip prefix-list DESIRABLE_ROUTE_PREFIX seq 10 permit 63.1.29.2/30
+ip prefix-list UNDESIRABLE_ROUTE_PREFIX seq 10 permit 63.1.29.6/30
+
+route-map UNDESIRABLE_ROUTE permit 10
+    match ip address UNDESIRABLE_ROUTE_PREFIX 
+    set local-preference 100
+
+route-map DESIRABLE_ROUTE permit 10
+    match ip address DESIRABLE_ROUTE_PREFIX 
+    set local-preference 600
+
+router bgp 10
+    neighbor 63.1.29.2 remote-as 20
+    network 192.168.0.0 mask 255.255.255.0
+    neighbor 63.1.29.2 route-map COMCAST_IN in
+    neighbor 63.1.29.2 route-map NETWORK_SUMMARY_OUT out
+    neighbor 63.1.29.2 route-map DESIRABLE_ROUTE in
+    neighbor 63.1.29.2 soft-reconfiguration inbound
+
+    neighbor 63.1.29.6 remote-as 30
+    network 192.168.0.0 mask 255.255.255.0
+    neighbor 63.1.29.6 route-map CENTURY_IN in
+    neighbor 63.1.29.6 route-map NETWORK_SUMMARY_OUT out
+    neighbor 63.1.29.6 route-map UNDESIRABLE_ROUTE in
+    neighbor 63.1.29.6 soft-reconfiguration inbound
+    ! neighbor 63.1.29.6 route-map PREPEND out This causes routes to not be advertised
+exit
+
+
+
+
+
+
+ip sla 1
+    icmp-echo 10.0.0.125 
+    frequency 10
+exit
+
+ip sla schedule 1 start-time now life forever
+
+track 1 ip sla 1 reachability
+
+ip route 0.0.0.0 0.0.0.0 63.1.29.2 track 1
+ip route 10.0.0.125 255.255.255.255 63.1.29.2  
+ip route 0.0.0.0 0.0.0.0 63.1.29.6 20

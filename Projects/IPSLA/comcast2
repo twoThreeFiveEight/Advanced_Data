@@ -1,0 +1,39 @@
+enable
+conf t
+hostname comcast2
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local  
+
+
+interface loop0 
+    description LoopbackRTRComcast1
+    ip address 10.0.0.126 255.255.255.255
+exit
+
+interface G0/0
+    description toAstonTech
+    ip address 10.0.0.2 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/1
+    description toComcast2
+    ip address 10.0.0.5 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+router ospf 29
+    network 10.0.0.0 0.0.0.3 area 0
+    redistribute connected subnets
+    default-information originate
+exit
+
+ip route 0.0.0.0 0.0.0.0 10.0.0.6

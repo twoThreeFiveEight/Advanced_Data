@@ -1,0 +1,64 @@
+
+enable
+conf t
+hostname PHI-ACC-SW2
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+no ip routing
+
+vlan 69
+name MGMT
+
+vlan 202
+name USERS
+
+interface vlan 69
+description MGMT
+ip address 192.168.0.6 255.255.255.240
+shut 
+no shut
+
+interface fa0/5
+description toPHI-CORE-SW2
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan all
+shut 
+no shut
+
+interface fa0/6
+description toPHI-CORE-SW1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan all
+shut 
+no shut
+
+interface fa0/2
+description toMGMT
+switchport access vlan 69
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+interface fa0/3
+description toUSERS
+switchport access vlan 202
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end
+wr mem
+

@@ -1,0 +1,65 @@
+
+enable
+conf t
+hostname DEN-RTR1
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+interface loop0
+ip address 10.0.0.66 255.255.255.255
+shut 
+no shut
+
+interface fa0/2
+ip address 10.0.0.69 255.255.255.252
+shut
+no shut
+
+interface fa0/1
+no ip address
+shut
+no shut
+
+interface fa0/1.25
+encapsulation dot1q 25
+ip address 10.0.0.2 255.255.255.240
+ip helper-address 192.168.0.66
+shut 
+no shut
+
+interface fa0/1.115
+encapsulation dot1q 115
+ip address 10.0.0.18 255.255.255.240
+ip helper-address 192.168.0.66
+shut 
+no shut
+
+ip route 10.0.0.0 255.255.0.0 null0 name Summary_Null_Route
+
+ip prefix-list OUT_PREFIXES seq 10 permit 10.0.0.0/16 
+route-map ISP_OUT permit 10
+match ip address prefix-list OUT_PREFIXES 
+
+ip prefix-list IN_PREFIXES seq 10 permit 0.0.0.0/0
+ip prefix-list IN_PREFIXES seq 20 permit 172.16.0.0/24
+ip prefix-list IN_PREFIXES seq 30 permit 10.1.0.0/16
+ip prefix-list IN_PREFIXES seq 40 permit 192.168.0.0/24
+route-map ISP_IN permit 10
+match ip address prefix-list IN_PREFIXES
+
+router bgp 719
+neighbor 10.0.0.70 remote-as 661
+network 10.0.0.0 mask 255.255.0.0
+neighbor 10.0.0.70 soft-reconfiguration inbound
+neighbor 10.0.0.70 route-map ISP_IN in
+neighbor 10.0.0.70 route-map ISP_OUT out
+exit
+
+end 
+wr mem

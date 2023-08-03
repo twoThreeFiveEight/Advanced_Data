@@ -1,0 +1,15 @@
+
+en
+conf t
+hostname R3
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous
+login local
+line vty 0 4
+logging synchronous
+login local
+
+
+

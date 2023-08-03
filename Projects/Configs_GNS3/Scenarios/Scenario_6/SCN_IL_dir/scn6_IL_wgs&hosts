@@ -1,0 +1,175 @@
+
+! ------------------------------------------
+! Hosts
+! ------------------------------------------
+! Joe_IL_10.2.29.212/29 Vlan 10.2.29.209 1290 gateway
+! ip dhcp 
+ip 10.2.29.212/29 10.2.29.211
+wr
+
+! Jared_IL_V1XX0 -> HSRP 10.2.29.211
+! ip dhcp
+ip 10.2.29.213/29 10.2.29.211
+wr
+
+
+! TomCat_IL_V2XX0: HSPR 10.2.29.219
+ip 10.2.29.220/29 10.2.29.219
+wr
+
+
+! LinuxServer V3XX0: 10.2.XX.228/27 VLAN gateway 3XX0: 10.2.XX.225/27 
+! ip dhcp
+ip 10.2.29.228/27 10.2.29.227
+wr
+
+
+! Switch: wgsIL029a02a01
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! VLANs 
+! ------------------------
+vlan 1290
+name RemoteManagement 
+
+! SVI Creation
+! ------------------------
+interface vlan 1290
+description Users: Joe
+ip address 10.2.29.214 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g0/1
+description to_mlsIL0XXa02a01
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+int g0/2
+description toJoe 
+switchport access vlan 1290
+switchport mode access 
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+int g1/1
+description to_mlsIL0XXa02a02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+end 
+wr mem
+
+! Switch: wgsIL029a02a02
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsIL029a02a02
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! BPDU Guard
+spanning-tree bpdugaurd default
+
+
+! VLANs 
+! ------------------------
+vlan 1290
+name rmtManagement
+
+vlan 2290
+name RemoteManagement 
+
+! SVI Creation
+! ------------------------
+interface vlan 2290
+description rmtManagement
+ip address 10.2.29.221 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g1/1
+description to_mlsIL0XXa02a01
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+int g0/1
+description to_mlsIL0XXa02a02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+int g0/2
+description toJared 
+switchport access vlan 1290
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+int g0/3
+description toTomCatServer
+switchport access vlan 2290
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut 
+no shut
+
+end 
+wr mem

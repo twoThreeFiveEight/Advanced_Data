@@ -1,0 +1,140 @@
+
+! [] Add interface g0/5
+
+! Router: rtrIL029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname rtrIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! LoopBack configurations
+! -------------------------
+int loop0
+ip nat inside
+ip address 10.2.29.192 255.255.255.255
+shut
+no shut
+
+! Interfaces:
+!--------------------------
+! toCOMCAST
+int g0/1
+ip address 63.2.29.18 255.255.255.0
+ip nat outside
+shut
+no shut
+
+! toNY
+int g0/2
+ip address 10.2.29.74 255.255.255.252
+ip nat inside
+shut
+no shut
+
+!toILL3SWITCH
+int g0/3
+ip address 10.2.29.202 255.255.255.252
+ip nat inside
+shut
+no shut
+
+! toCA
+int g0/4
+ip address 10.2.29.70 255.255.255.252
+ip nat inside
+shut
+no shut
+
+! NEW ************************************************************************************************************************************* 
+! toILL3SW02
+int g0/5
+ip address 10.2.29.206 255.255.255.252
+ip nat inside
+shut 
+no shut
+! NEW ************************************************************************************************************************************* 
+
+
+! OSPF
+!-----
+! Defualt information orginate sends default gateway to all interfaces
+!-----------------------------
+router ospf 20
+network 10.2.29.200 0.0.0.3 area 0  
+network 10.2.29.68 0.0.0.3 area 1   
+network 10.2.29.72 0.0.0.3 area 2
+redistribute bgp 129
+default-information orignated
+
+! BGP
+!-----
+! ADDED redistribute bgp 129 to the router ospf 20.
+router bgp 129  
+neighbor 63.2.29.17 remote-as 7922     
+network 63.2.29.0 mask 255.255.255.0  
+neighbor 63.2.29.17 soft-reconfiguration inbound
+! The above code `soft-reconfigurtation` is necessary to allow logging of data before & after the bgp filter to allow diagnostics
+! accross the filter. If it is not filtering properly you can see how the data enter compared to how it exits. 
+
+! GLOBAL
+ip nat pool OUTSIDE 10.4.29.0 10.4.29.254 netmask 255.255.255.0
+ip nat inside source list 1 interface GigabitEthernet0/1 overload
+ip nat outside source list 2 pool OUTSIDE
+
+! ACL -> done inside global config.
+access-list 1 permit 10.2.29.0 0.0.0.255  
+access-list 2 permit 180.3.29.0 0.0.0.255
+
+end 
+wr mem
+
+
+
+
+
+! Static Routing 
+! ------------------------
+! default route
+! ip route 0.0.0.0 0.0.0.0 63.2.29.17 -> rmeoved because bgp is advertising a defualt route.
+
+! toIL
+!-----
+! supernet: 10.2.29.192/26
+!-------------------------
+! STATIC SUMMERIZATION: ip route 10.2.29.192 255.255.255.192 10.2.29.201
+
+! toNY
+!-----
+! supernet: 10.2.29.128/27
+! STATIC SUMMERIZATION: ip route 10.2.29.128 255.255.255.224 10.2.29.73
+
+!toCA
+!-----
+! supernet 10.2.29.0/27
+! STATIC SUMMERIZATION: ip route 10.2.29.0 255.255.255.224 10.2.29.69
+
+
+! NAT explicit interface declarations
+! NAT -> inside
+!int g0/4
+!ip nat inside
+
+!int g0/2 
+!ip nat inside
+
+!int g0/3 
+!ip nat inside
+
+! NAT -> outside
+! int g0/1
+! ip nat outside

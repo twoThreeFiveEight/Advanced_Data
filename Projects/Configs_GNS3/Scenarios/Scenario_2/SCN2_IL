@@ -1,0 +1,368 @@
+!*************************************************************************
+! Scene2 -> Illinois Network
+! 
+! rtrIL0XXa02a01
+!    toNY_ROUTER -> 10.2.XX.74/30 -> g0/2
+!    toCA_ROUTER -> 10.2.XX.70/30 -> g0/4
+!    toComCast -> 63.2.XX.18/24 -> g0/1 
+!    Loop0: 10.2.XX.192/32
+
+! Layer3 switch: mlsIL0XXa02a01 -> 10.2.XX.201/30 -> g0/3 -> routed link
+!    - Loop0: 10.2.XX.194/32
+!    - VLAN SVI 1XX0: 10.2.XX.209/29
+!    - VLAN SVI 2XX0: 10.2.XX.217/29
+!    - VLAN SVI 3XX0: 10.2.XX.225/27
+!        g1/0 -> Trunk 1XX0,2XX0
+!        g1/2 -> Access VLAN 3XX0
+!        g1/1 -> Trunk 1XX0,2XX0
+!    
+! Linux DHCP Server: V3XX0: 10.2.XX.228/27
+!
+! left network:
+! wgsIL0XXa02a01 -> VLAN 1XX0: 10.2.XX.214/29
+! JOEs desk: VLAN 1XX0: 10.2.XX.212/29
+!
+! Right network:
+! wgsIL0XXa02a02 -> VLAN 2XX0: 10.2.XX.213/29
+! Jareds desk -> V2XX0: 10.2.XX.220/29
+!
+!*************************************************************************
+
+! ------------------------------------------
+! Hosts
+! ------------------------------------------
+! Joe_IL_10.2.29.212/29 Vlan 10.2.29.209 1290 gateway
+ip 10.2.29.212/29 10.2.29.209
+wr
+
+! Jared_IL_V1XX0: 10.2.XX.212/29 VLAN gateway 1XX0: 10.2.XX.209/29
+ip 10.2.29.220/29 10.2.29.217
+wr
+
+! LinuxServer V3XX0: 10.2.XX.228/27 VLAN gateway 3XX0: 10.2.XX.225/27
+ip 10.2.29.228/27 10.2.29.225
+wr
+
+! Switch: wgsIL029a02a01
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! VLANs 
+! ------------------------
+vlan 1290
+name RemoteManagement 
+
+! not in use
+! vlan 2292
+! name 
+
+! SVI Creation
+! ------------------------
+interface vlan 1290
+description Users: Joe
+ip address 10.2.29.214 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g0/1
+description toIL_L3Switch
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+int g0/2
+description toJoe 
+switchport access vlan 1290
+switchport mode access 
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end 
+wr mem
+
+! Switch: wgsIL029a02a02
+! ------------------------------------------
+! Initial config.
+! ------------------------------------------
+enable
+conf t
+hostname wgsIL029a02a02
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Routing Option:
+!-------------------------
+! Make switch Layer 2
+no ip routing
+
+! Make Switch Layer 3
+! ip routing
+
+! BPDU Guard
+spanning-tree bpdugaurd default
+
+! VLANs 
+! ------------------------
+vlan 2290
+name RemoteManagement 
+
+! not in use
+! vlan 2292
+! name 
+
+! SVI Creation
+! ------------------------
+interface vlan 2290
+description Users: Jared
+ip address 10.2.29.213 255.255.255.248
+shut
+no shut
+
+! interface configurations 
+! ------------------------
+int g1/1
+description toIL_L3Switch
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+int g0/2
+description toJared 
+switchport access vlan 2290
+switchport mode access 
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+end 
+wr mem
+
+! L3 Switch: mlsIL029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname mlsIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! Make Switch Layer 3
+ip routing
+
+vlan 1290
+name Office1
+
+vlan 2290
+name Office2
+
+vlan 3290
+name Server
+
+! SVI -> defualt gateways
+! -----------------------
+interface vlan 1290
+description Users: office1
+ip address 10.2.29.209 255.255.255.248
+shut
+no shut
+
+interface vlan 2290
+description Users: office2
+ip address 10.2.29.217 255.255.255.248
+shut
+no shut
+
+interface vlan 3290
+description Users: Server
+ip address 10.2.29.225 255.255.255.224
+shut
+no shut
+
+! LoopBack configurations
+! -------------------------
+interface loop0
+ip address 10.2.29.194 255.255.255.255
+shut
+no shut
+
+! Interfaces
+! -------------------------
+
+! TO_ROUTER
+interface g0/3
+no switchport
+ip address 10.2.29.201 255.255.255.252
+shut
+no shut
+
+! g1/0 
+interface g1/0
+description toWGSIL_01
+switchport trunk encapsulation dot1q 
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+! g1/2
+int g1/2
+description toLinuxServer
+switchport access vlan 3290
+switchport mode access
+spanning-tree portfast
+spanning-tree bpduguard enable
+shut
+no shut
+
+! g1/1
+int g1/1
+description toWGSIL_02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1290,2290
+shut
+no shut
+
+! Static Routing 
+! ------------------------
+! default gateway
+!----------------
+ip route 0.0.0.0 0.0.0.0 10.2.29.202
+
+! toIL_ROUTER
+!------------
+ip route 10.2.29.192 255.255.255.255 10.2.29.202
+
+! toNY
+!-----
+!toAdrian 10.2.29.128/27 supernet
+ip route 10.2.29.128 255.255.255.224 10.2.29.202
+
+!toCA
+!-----
+! toJames 10.2.29.0/27 supernet
+ip route 10.2.29.0 255.255.255.224 10.2.29.202
+
+! toILswitch
+
+end 
+wr mem
+
+! Router: rtrIL029a02a01
+! ------------------------------------------- 
+! Init config
+! -------------------------------------------
+enable
+conf t
+hostname rtrIL029a02a01
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local 
+
+! LoopBack configurations
+! -------------------------
+int loop0
+ip address 10.2.29.192 255.255.255.255
+shut
+no shut
+
+! Interfaces:
+!--------------------------
+! toCA
+int g0/0
+ip address 10.2.29.70 255.255.255.252
+shut
+no shut
+
+! toCOMCAST
+int g0/1
+ip address 63.2.29.18 255.255.255.0
+shut
+no shut
+
+! toNY
+int g0/2
+ip address 10.2.29.74 255.255.255.252
+shut
+no shut
+
+!toILL3SWITCH
+int g0/3
+ip address 10.2.29.202 255.255.255.252
+shut
+no shut
+
+! Static Routing 
+! ------------------------
+! default route
+ip route 0.0.0.0 0.0.0.0 63.2.29.17
+
+! toCOMCAST
+!----------
+! Mentors will configure?
+
+! toIL
+!-----
+! supernet: 10.2.29.192/26
+!-------------------------
+ip route 10.2.29.192 255.255.255.192 10.2.29.201
+
+! toNY
+!-----
+! supernet: 10.2.29.128/27
+ip route 10.2.29.128 255.255.255.224 10.2.29.73
+
+!toCA
+!-----
+! supernet 10.2.29.0/27
+ip route 10.2.29.0 255.255.255.224 10.2.29.69
+
+end 
+wr mem

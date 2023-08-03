@@ -1,0 +1,61 @@
+
+enable
+conf t
+hostname comcast1
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local  
+
+interface loop0 
+    description LoopbackRTRComcast1
+    ip address 10.0.0.125 255.255.255.255
+exit
+
+interface G0/0
+    description toAstonTech
+    ip address 63.1.29.2 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+interface G0/1
+    description toComcast2
+    ip address 10.0.0.1 255.255.255.252
+    shutdown
+    no shutdown
+exit
+
+router ospf 29
+    network 10.0.0.0 0.0.0.3 area 0
+    redistribute bgp 20
+    redistribute connected subnets
+exit
+
+ip route 10.0.0.0 255.255.255.128 null0 name NetworkSummary
+
+ip prefix-list astonNetSumIN seq 10 permit 192.168.0.0/24
+
+ip prefix-list defaultOutPrefix seq 10 permit 0.0.0.0/0
+ip prefix-list netSumOutPrefix seq 10 permit 10.0.0.0/25 
+
+route-map ASTON_OUT permit 10               
+    match ip address prefix-list netSumOutPrefix
+    match ip address prefix-list defaultOutPrefix
+
+route-map ASTON_IN permit 10               
+    match ip address prefix-list astonNetSumIN
+
+router bgp 20
+    neighbor 63.1.29.1 remote-as 10
+    network 0.0.0.0 mask 0.0.0.0
+    network 10.0.0.0 mask 255.255.255.0
+    neighbor 63.1.29.1 route-map ASTON_IN in
+    neighbor 63.1.29.1 route-map ASTON_OUT out
+    neighbor 63.1.29.1 soft-reconfiguration inbound
+exit
+

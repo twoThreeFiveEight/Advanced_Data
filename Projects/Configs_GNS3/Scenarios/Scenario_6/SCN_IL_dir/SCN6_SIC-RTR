@@ -1,0 +1,146 @@
+
+! SIC-RTR-1
+!--------------------------------------------------------------
+! Init
+enable
+conf t
+hostname SIC-RTR-1
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local  
+
+
+
+! NEW *****************************************************************************************************************************************************************************
+! IN -> Prefix list to inject BGP routing table.
+! This is filtering the only routes we want from out neighbor
+ip prefix-list IPS_IN seq 10 permit 0.0.0.0/0
+route-map ISP_IN permit 10               
+match ip address prefix-list ISP_IN      
+! NEW *****************************************************************************************************************************************************************************
+
+! NEW *****************************************************************************************************************************************************************************
+! OUT -> prefixes that the router will advertise.
+ip prefix-list ISP_OUT seq 10 permit 180.3.29.18/24
+route-map ISP_OUT permit 10
+match ip address prefix-list ISP_OUT
+! NEW *****************************************************************************************************************************************************************************
+
+
+int loop0
+ip address 10.3.29.1 255.255.255.255 
+ip nat inside
+shut 
+no shut
+
+! Interfaces:
+!--------------------------
+! toSIC-RTR-1
+int g0/2
+ip address 10.3.29.73 255.255.255.252
+shut
+no shut
+
+! toComCast
+int g0/1
+ip address 180.3.29.18 255.255.255.0
+shut
+no shut
+
+! Static Routes: Took away static routes because bgp is advertising them for us.
+! ip route 0.0.0.0 0.0.0.0 180.3.29.17
+
+
+! EIGRP Configs
+router eigrp 29
+network 10.3.29.72 0.0.0.3       
+passive-interface g0/1 
+redistribute static
+redistribute connected 
+redistribute bgp 229
+default-metric 10000 10 255 1 1500 
+
+router bgp 229
+neighbor 180.3.29.17 remote-as 7922
+network 180.3.29.0 mask 255.255.255.0 
+neighbor 180.3.29.17 soft-reconfiguration inbound
+! The above code `soft-reconfigurtation` is necessary to allow logging of data before & after the bgp filter to allow diagnostics
+! accross the filter. If it is not filtering properly you can see how the data enter compared to how it exits.
+! NEW *****************************************************************************************************************************************************************************
+neighbor 180.3.29.17 route-map ISP_IN in
+neighbor 180.3.29.17 route-map ISP_OUT out
+! NEW *****************************************************************************************************************************************************************************
+
+
+
+int g0/2
+ip nat inside
+
+int g0/1
+ip nat outside
+
+! GLOBAL config
+access-list 1 permit 10.3.29.0 0.0.0.255
+access-list 2 permit 63.2.29.0 0.0.0.255
+
+! GLOBAL
+ip nat pool OUTSIDE 10.5.29.0 10.5.29.254 netmask 255.255.255.0
+ip nat inside source list 1 interface GigabitEthernet0/1 overload
+ip nat outside source list 2 pool OUTSIDE
+
+end 
+wr mem
+
+! SIC-RTR-2
+!---------------------------------------------------------------
+! Init
+enable
+conf t
+hostname SIC-RTR-2
+enable secret cisco
+username cisco secret cisco
+line con 0
+logging synchronous 
+login local
+line vty 0 4
+logging synchronous 
+login local
+
+int loop0
+ip address 10.3.29.1 255.255.255.248 
+shut 
+no shut
+
+int loop1
+ip address 10.3.29.1 255.255.255.248
+shut
+no shut
+
+! Interfaces:
+!--------------------------
+! toSIC-RTR-1
+int g0/2
+ip address 10.3.29.74 255.255.255.252
+shut
+no shut
+
+! EIGRP Configs
+! no area used in eigrp
+router eigrp 29
+network 10.3.29.72 0.0.0.3 
+passive-interface default
+no passive-interface g0/2
+redistribute static
+redistribute connected
+default-metric 10000 10 255 1 1500 
+
+end 
+wr mem
+
+
+
